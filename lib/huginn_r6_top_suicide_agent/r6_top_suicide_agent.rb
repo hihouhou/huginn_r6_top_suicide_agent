@@ -43,7 +43,7 @@ module Agents
     
     def top_suicide(users)
       top = []
-      payload = {}
+      payload = { "type" => "suicide", "classement" => {} }
       log "top_suicide launched"
 
       users.each do |item, index|
@@ -57,7 +57,8 @@ module Agents
       log "#{top}"
       top.each do |top|
 #        log "#{top[:username]}: #{top[:nbr]}"
-        payload.merge!("#{top[:username]}": "#{top[:nbr]}")
+        payload.deep_merge!({"classement" => { "#{top[:username]}" => "#{top[:nbr]}" }})
+        log "#{payload}"
       end
       log "conversion done"
       if interpolated['changes_only'] == 'true'
