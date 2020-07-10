@@ -48,17 +48,15 @@ module Agents
 
       users.each do |item, index|
           json = fetch(item)
-          username  = json['username']
-          nbr_suicide = json['stats'][0]['general']['suicides']
-          log "#{username} #{nbr_suicide}"
+          username  = json['data']['username']
+          nbr_suicide = json['data']['stats'][0]['general']['suicides']
+#          log "#{username} #{nbr_suicide}"
           top << { :username => username, :nbr => nbr_suicide }
       end
       top = top.sort_by { |hsh| hsh[:nbr] }.reverse
-      log "#{top}"
       top.each do |top|
-#        log "#{top[:username]}: #{top[:nbr]}"
+        log "#{top[:username]}: #{top[:nbr]}"
         payload.deep_merge!({"classement" => { "#{top[:username]}" => "#{top[:nbr]}" }})
-        log "#{payload}"
       end
       log "conversion done"
       if interpolated['changes_only'] == 'true'
@@ -76,10 +74,10 @@ module Agents
 
     def fetch(user)
         url = 'https://r6stats.com/api/stats/' + user
-    #    puts url
         uri = URI(url)
         response = Net::HTTP.get(uri)
         obj = JSON.parse(response)
+#        log "request status for #{user} : #{response.code}"
     end
   end
 end
