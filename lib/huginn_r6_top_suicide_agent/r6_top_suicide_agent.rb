@@ -1,18 +1,25 @@
 module Agents
   class R6TopSuicideAgent < Agent
+    include FormConfigurable
     can_dry_run!
-    default_schedule '1d'
+    default_schedule 'every_1d'
 
     description <<-MD
       This agent fetch stats about user's suicides and creates a top score for R6 Games
+
+      `debug` is used for verbose mode.
     MD
 
     def default_options
       {
-        'users' => ["a", "b", "c"],
+        'users' => 'user1 user2 user3 user4',
+        'debug' => 'false',
         'changes_only' => 'true'
       }
     end
+    form_configurable :users, type: :string
+    form_configurable :debug, type: :boolean
+    form_configurable :changes_only, type: :boolean
 
     def validate_options
       unless options['users'].present?
@@ -21,6 +28,10 @@ module Agents
 
       if options.has_key?('changes_only') && boolify(options['changes_only']).nil?
         errors.add(:base, "if provided, changes_only must be true or false")
+      end
+
+      if options.has_key?('debug') && boolify(options['debug']).nil?
+        errors.add(:base, "if provided, debug must be true or false")
       end
     end
 
@@ -31,23 +42,28 @@ module Agents
     def check
       top_suicide interpolated['users']
     end
+
     private
-    
+
     def top_suicide(users)
       top = []
       payload = { "type" => "suicide", "classement" => {} }
       log "top_suicide launched"
-
-      users.each do |item, index|
+      users_array = users.split(" ")
+      users_array.each do |item, index|
           json = fetch(item)
           username  = json['data']['username']
           nbr_suicide = json['data']['stats'][0]['general']['suicides']
-#          log "#{username} #{nbr_suicide}"
+          if interpolated['debug'] == 'true'
+            log "#{username} #{nbr_suicide}"
+          end
           top << { :username => username, :nbr => nbr_suicide }
       end
       top = top.sort_by { |hsh| hsh[:nbr] }.reverse
       top.each do |top|
-        log "#{top[:username]}: #{top[:nbr]}"
+        if interpolated['debug'] == 'true'
+          log "#{top[:username]}: #{top[:nbr]}"
+        end
         payload.deep_merge!({"classement" => { "#{top[:username]}" => "#{top[:nbr]}" }})
       end
       log "conversion done"
@@ -68,8 +84,10 @@ module Agents
         url = 'https://r6stats.com/api/stats/' + user
         uri = URI(url)
         response = Net::HTTP.get(uri)
+        if interpolated['debug'] == 'true'
+          log "request status for #{user} : #{response}"
+        end
         obj = JSON.parse(response)
-#        log "request status for #{user} : #{response.code}"
     end
   end
 end
