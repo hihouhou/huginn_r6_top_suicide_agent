@@ -3,11 +3,34 @@ module Agents
     include FormConfigurable
     can_dry_run!
     default_schedule 'every_1d'
+    description do
+      <<-MD
 
-    description <<-MD
       This agent fetch stats about user's suicides and creates a top score for R6 Games
 
       `debug` is used for verbose mode.
+      MD
+    end
+
+    event_description <<-MD
+      Events look like this:
+
+          {
+            "type": "suicide",
+            "game": "r6",
+            "classement": {
+              "XXXXXXXXXX": "41",
+              "XXXXXX": "36",
+              "XXXXXXX": "20",
+              "XXXXXXXX": "18",
+              "XXXXXXXXXXXXXX": "18",
+              "XXXXXXXX": "17",
+              "XXXXXXXX": "16",
+              "XXXXXXXXXX": "12",
+              "XXXXXXX": "9",
+              "XXXXXXXX": "7"
+            }
+          }
     MD
 
     def default_options
@@ -47,7 +70,7 @@ module Agents
 
     def top_suicide(users)
       top = []
-      payload = { "type" => "suicide", "classement" => {} }
+      payload = { "type" => "suicide", "game" => "r6", "classement" => {} }
       log "top_suicide launched"
       users_array = users.split(" ")
       users_array.each do |item, index|
